@@ -1,0 +1,37 @@
+Groove89 Song File format:
+zero terminated songtitle (max 20 chars)
+zero terminated songartist (max 20 chars)
+Word-aligned minbpm, maxbpm, modebpm (2 bytes each)
+Word-aligned two byte flag variable:
+	bits 0-4: flag set if difficulty exists in file
+		difficulties are Beginner, light, standard, heavy, and challenge respectively.
+	bits 5-15: Reserved for future versions, perhaps containing version info.
+		Current versions will warn if these bits are not 0.
+For each difficulty flag set:
+	one byte describing foot rating (a value up to 15 -- yes only 4 bits are necessary, 
+		but the C struct handling code would more than make up the difference.)
+	five bytes describing the five radar values ("voltage", "stream", "chaos", "freeze", and "air")
+	four bytes for file offset for stepchart (absolute offset from beginning of file)
+
+A list of BPM changes in the following format:
+	two bytes describing beat offset as an unsigned integer
+	one byte describing the offset of the offset in 1/64ths
+	two bytes describing the BPM at that offset
+two byte 0 signifying end of BPM changes list (note that this is the second 0 in the list)
+
+Each step in the stepchart data follows this pattern
+	XXXX0000 	for a regular tap note. The first (i.e. most significant) four bits are for left, down, up, and right respectively
+	X000X000	If for a regular tap note there is a corresponding flag set in the other four bits, the tap
+					note is treated as a hold. There should be one of these for the start of a hold, and another
+					for the end.
+	000X00X0	If a hold flag is set that does not match a tap flag, that denotes a special code. they go as follows:
+	
+	1000XXXX	resolution code (note that Groove assumes a 1/4 resolution until told otherwise):
+					1000 1111  -  1/4 resolution
+					1000 0111  -  1/8 resolution
+					1000 0011  -  1/16 resolution
+					1000 0001  -  1/32 resolution
+					1000 0010  -  1/64 resolution
+					1000 0100  -  1/12 resolution
+					1000 0101  -  1/24 resolution
+	10100101	End of notes tag.
